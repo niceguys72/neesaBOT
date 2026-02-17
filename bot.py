@@ -13,7 +13,7 @@ TARGET_USER_ID = int(os.getenv('TARGET_ID'))
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
 AUDIO_FILE_PATH = "./audio.wav"
-FFMPEG_PATH = "/root/.nix-profile/bin/ffmpeg"
+FFMPEG_PATH = shutil.which("ffmpeg") or "ffmpeg"
 
 print(f"Loaded TARGET_USER_ID: {TARGET_USER_ID}")
 print(f"Token loaded (length: {len(TOKEN)})")

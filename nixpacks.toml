@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['...', 'python3', 'python3Packages.pip', 'ffmpeg']
+nixPkgs = ["python3", "gcc", "ffmpeg", "libopus"]
 
 # Optional: If you need gcc/make for any compiled deps (rare for discord.py)
 # aptPkgs = ['build-essential']
