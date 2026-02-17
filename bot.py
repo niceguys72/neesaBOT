@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
-TARGET_USER_ID = 247253227848990720
+TARGET_USER_ID = 368313447915716608
 AUDIO_FILE = "audio.mp3"
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
