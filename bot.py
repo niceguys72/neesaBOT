@@ -6,7 +6,6 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 TARGET_USER_ID_STR = os.getenv('TARGET_ID')
 TARGET_USER_ID = int(TARGET_USER_ID_STR)
-AUDIO_FILE = discord.FFmpegPCMAudio("./audio.mp3")
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
 print(f"Loaded TARGET_USER_ID: {TARGET_USER_ID}")
@@ -24,11 +23,18 @@ async def start_playback(voice_client: discord.VoiceClient):
     try:
         await asyncio.sleep(DELAY_BEFORE_PLAY)
         while True:
-            source = discord.FFmpegPCMAudio(AUDIO_FILE)
-            voice_client.play(source, after=lambda e: print(f'Player error: {e}') if e else None)
+            source = discord.FFmpegPCMAudio("./audio.mp3")
+
+            voice_client.play(
+                source,
+                after=lambda e: print(f'Player error: {e}') if e else None
+            )
+
             while voice_client.is_playing():
                 await asyncio.sleep(1)
+
             await asyncio.sleep(LOOP_INTERVAL)
+
     except asyncio.CancelledError:
         pass
     except Exception as e:
