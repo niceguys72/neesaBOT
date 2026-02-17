@@ -6,10 +6,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 TARGET_USER_ID_STR = os.getenv('TARGET_ID')
 TARGET_USER_ID = int(TARGET_USER_ID_STR)
-AUDIO_FILE = discord.FFmpegPCMAudio(
-    "./audio.mp3",
-    executable="/usr/bin/ffmpeg"
-)
+AUDIO_FILE = discord.FFmpegPCMAudio("./audio.mp3")
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
 print(f"Loaded TARGET_USER_ID: {TARGET_USER_ID}")
