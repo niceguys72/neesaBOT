@@ -5,15 +5,16 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 TARGET_USER_ID_STR = os.getenv('TARGET_ID')
+TARGET_USER_ID = int(TARGET_USER_ID_STR)
 AUDIO_FILE = "audio.mp3"
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
-
+print(f"Loaded TARGET_USER_ID: {TARGET_USER_ID}")
+print(f"Token loaded (length: {len(TOKEN)})")
 intents = discord.Intents.default()
 intents.voice_states = True
 intents.guilds = True
 intents.members = True  # Needed for fetch_member
-
 client = discord.Client(intents=intents)
 
 vc = None
