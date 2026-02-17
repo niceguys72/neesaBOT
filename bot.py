@@ -13,12 +13,7 @@ TARGET_USER_ID = int(os.getenv('TARGET_ID'))
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
 AUDIO_FILE_PATH = "./audio.wav"
-source = discord.FFmpegPCMAudio(
-    AUDIO_FILE_PATH,
-    executable="/root/.nix-profile/bin/ffmpeg",
-    before_options="-nostdin",
-    options="-vn"
-)
+FFMPEG_PATH = "/root/.nix-profile/bin/ffmpeg"
 
 print(f"Loaded TARGET_USER_ID: {TARGET_USER_ID}")
 print(f"Token loaded (length: {len(TOKEN)})")
@@ -28,31 +23,46 @@ intents = discord.Intents.default()
 intents.voice_states = True
 intents.guilds = True
 intents.members = True
+
 client = discord.Client(intents=intents)
 
-# Globals for voice client and playback
+# Globals
 vc: discord.VoiceClient | None = None
 playback_task: asyncio.Task | None = None
 
 
 async def start_playback(voice_client: discord.VoiceClient):
-    """Loop audio playback for a voice client."""
+    """Loop audio playback safely."""
     try:
         await asyncio.sleep(DELAY_BEFORE_PLAY)
+
         while True:
-            voice_client.play(
-                source,
-                after=lambda e: print(f"Player error: {e}") if e else None
+            if not voice_client.is_connected():
+                print("Voice client disconnected. Stopping loop.")
+                break
+
+            print("Starting playback...")
+
+            source = discord.FFmpegPCMAudio(
+                AUDIO_FILE_PATH,
+                executable=FFMPEG_PATH,
+                before_options="-nostdin",
+                options="-vn"
             )
 
-            # Wait for current track to finish
+            voice_client.play(
+                source,
+                after=lambda e: print(f"Player error: {e}") if e else print("Playback finished")
+            )
+
             while voice_client.is_playing():
                 await asyncio.sleep(1)
 
+            print("Waiting for next loop...")
             await asyncio.sleep(LOOP_INTERVAL)
 
     except asyncio.CancelledError:
-        # Stop audio cleanly when task is cancelled
+        print("Playback task cancelled.")
         if voice_client.is_playing():
             voice_client.stop()
         raise
@@ -61,7 +71,7 @@ async def start_playback(voice_client: discord.VoiceClient):
 
 
 async def stop_playback():
-    """Stop playback task and disconnect voice client cleanly."""
+    """Stop playback and disconnect cleanly."""
     global vc, playback_task
 
     if playback_task:
@@ -75,38 +85,54 @@ async def stop_playback():
     if vc:
         if vc.is_playing():
             vc.stop()
-        await vc.disconnect()
+        if vc.is_connected():
+            await vc.disconnect()
         vc = None
 
 
 async def connect_and_start(channel: discord.VoiceChannel):
-    """Connect to VC and start playback."""
+    """Connect and start playback safely."""
     global vc, playback_task
 
-    # Stop any existing playback first
+    # Prevent duplicate connections
+    if vc and vc.is_connected():
+        print("Already connected.")
+        return
+
     await stop_playback()
 
-    # Connect and start looping playback
-    vc = await channel.connect()
+    print("Connecting to voice...")
+    vc = await channel.connect(reconnect=True)
+
+    # Ensure not muted/deafened
+    await vc.guild.change_voice_state(
+        channel=channel,
+        self_mute=False,
+        self_deaf=False
+    )
+
     playback_task = asyncio.create_task(start_playback(vc))
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    """Detect when the target user joins, leaves, or switches channels."""
+    """Detect target user voice changes."""
     if member.id != TARGET_USER_ID:
         return
 
-    # Target joined VC
+    # Joined
     if after.channel and not before.channel:
+        print("Target joined voice.")
         await connect_and_start(after.channel)
 
-    # Target left VC
+    # Left
     elif not after.channel and before.channel:
+        print("Target left voice.")
         await stop_playback()
 
-    # Target switched VC
+    # Switched channels
     elif before.channel != after.channel and after.channel:
+        print("Target switched channels.")
         await connect_and_start(after.channel)
 
 
@@ -116,5 +142,6 @@ async def on_ready():
     print("FFmpeg path:", shutil.which("ffmpeg"))
     print("Audio exists:", os.path.exists(AUDIO_FILE_PATH))
     print("Audio absolute path:", os.path.abspath(AUDIO_FILE_PATH))
+
 
 client.run(TOKEN)
