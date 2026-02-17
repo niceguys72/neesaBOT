@@ -12,7 +12,13 @@ TARGET_USER_ID = int(os.getenv('TARGET_ID'))
 # Playback settings
 DELAY_BEFORE_PLAY = 3
 LOOP_INTERVAL = 300  # 5 mins
-AUDIO_FILE_PATH = "./audio.mp3"
+AUDIO_FILE_PATH = "./audio.wav"
+source = discord.FFmpegPCMAudio(
+    AUDIO_FILE_PATH,
+    executable="/root/.nix-profile/bin/ffmpeg",
+    before_options="-nostdin",
+    options="-vn"
+)
 
 print(f"Loaded TARGET_USER_ID: {TARGET_USER_ID}")
 print(f"Token loaded (length: {len(TOKEN)})")
@@ -34,7 +40,6 @@ async def start_playback(voice_client: discord.VoiceClient):
     try:
         await asyncio.sleep(DELAY_BEFORE_PLAY)
         while True:
-            source = discord.FFmpegPCMAudio(AUDIO_FILE_PATH)
             voice_client.play(
                 source,
                 after=lambda e: print(f"Player error: {e}") if e else None
