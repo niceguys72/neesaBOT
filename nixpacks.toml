@@ -1,4 +1,2 @@
-# nixpacks.toml
-
 [phases.setup]
-aptPkgs = ['ffmpeg']
+nixPkgs = ["ffmpeg"]
