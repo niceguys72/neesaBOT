@@ -54,27 +54,40 @@ async def start_playback(voice_client: discord.VoiceClient):
         print(f"Playback error: {e}")
 
 
-async def connect_and_start(channel: discord.VoiceChannel):
-    """Helper to connect to VC and start playback."""
+async def stop_playback():
+    """Stop playback task and disconnect voice client cleanly."""
     global vc, playback_task
-
-    if vc:
-        await vc.disconnect()
-
-    vc = await channel.connect()
 
     if playback_task:
         playback_task.cancel()
+        try:
+            await playback_task
+        except asyncio.CancelledError:
+            pass
         playback_task = None
 
+    if vc:
+        if vc.is_playing():
+            vc.stop()
+        await vc.disconnect()
+        vc = None
+
+
+async def connect_and_start(channel: discord.VoiceChannel):
+    """Connect to VC and start playback."""
+    global vc, playback_task
+
+    # Stop any existing playback first
+    await stop_playback()
+
+    # Connect and start looping playback
+    vc = await channel.connect()
     playback_task = asyncio.create_task(start_playback(vc))
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
     """Detect when the target user joins, leaves, or switches channels."""
-    global vc, playback_task
-
     if member.id != TARGET_USER_ID:
         return
 
@@ -84,13 +97,7 @@ async def on_voice_state_update(member, before, after):
 
     # Target left VC
     elif not after.channel and before.channel:
-        if vc:
-            vc.stop()
-            await vc.disconnect()
-            vc = None
-        if playback_task:
-            playback_task.cancel()
-            playback_task = None
+        await stop_playback()
 
     # Target switched VC
     elif before.channel != after.channel and after.channel:
