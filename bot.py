@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import os
+import shutil
 from dotenv import load_dotenv
 
 # Load environment
@@ -107,6 +108,8 @@ async def on_voice_state_update(member, before, after):
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user}")
-
+    print("FFmpeg path:", shutil.which("ffmpeg"))
+    print("Audio exists:", os.path.exists(AUDIO_FILE_PATH))
+    print("Audio absolute path:", os.path.abspath(AUDIO_FILE_PATH))
 
 client.run(TOKEN)
