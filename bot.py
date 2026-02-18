@@ -45,7 +45,7 @@ Now go be short, crazy and cute ♡
 # DISCORD CLIENT SETTINGS
 intents = discord.Intents.default()
 intents.message_content = True  # Required for reading messages
-intents.voice_states = True
+intents.voice_states = True  # Enable for voice updates
 intents.members = True
 
 client = discord.Client(intents=intents)
@@ -71,13 +71,17 @@ def ask_ai(prompt: str) -> str:
         ]
     }
 
-    response = requests.post(url, json=payload)
-    data = response.json()
-
     try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()  # Raise if not 200-299
+        data = response.json()
         return data["choices"][0]["message"]["content"]
-    except:
-        return "Sorry, I couldn't process that request."
+    except requests.exceptions.HTTPError as http_err:
+        return f"API error: {http_err} - Response: {response.text}"
+    except (requests.exceptions.JSONDecodeError, KeyError):
+        return f"Invalid response: {response.text}"
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"
 
 
 # ---------------------------
