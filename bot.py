@@ -45,7 +45,7 @@ Now go be short, crazy and cute ♡
 # DISCORD CLIENT SETTINGS
 intents = discord.Intents.default()
 intents.message_content = True  # Required for reading messages
-intents.voice_states = False
+intents.voice_states = True
 intents.members = True
 
 client = discord.Client(intents=intents)
